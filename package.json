@@ -1,0 +1,48 @@
+{
+  "name": "@primitivefi/rmm-core",
+  "version": "1.0.0",
+  "description": "∇ Primitive Replicating Market Maker protocol smart contracts.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/primitivefinance/rmm-core.git"
+  },
+  "author": "Primitive",
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://primitive.finance",
+  "keywords": [
+    "primitive",
+    "amm",
+    "swap",
+    "ethereum",
+    "smart contracts"
+  ],
+  "files": [
+    "src/interfaces",
+    "src/libraries",
+    "out/Engine.sol/Engine.json",
+    "out/Factory.sol/Factory.json",
+    "out/interfaces/**/*.json"
+  ],
+  "scripts": {
+    "clean": "forge clean",
+    "build": "forge build",
+    "test": "forge test",
+    "coverage": "forge coverage",
+    "gas-report": "forge test --gas-report",
+    "format": "forge fmt",
+    "lint": "solhint 'src/**/*.sol'"
+  },
+  "devDependencies": {
+    "@primitivefi/rmm-math": "^2.0.0-beta.3",
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.6",
+    "solhint": "^1.0.10",
+    "solhint-plugin-prettier": "^0.0.5"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+.vscode/
+artifacts/
+cache/
+docs/
+dist/
+node_modules/
+typechain/
+
+.env
+.env.test
+.npmrc
+
+crytic-export/
+corpus
+e2e_swap_corpus/
+e2e_swap_2_corpus/
