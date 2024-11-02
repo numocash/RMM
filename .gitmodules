@@ -15,3 +15,6 @@
 [submodule "lib/solidity-cdf"]
 	path = lib/solidity-cdf
 	url = https://github.com/fiveoutofnine/solidity-cdf
+[submodule "lib/solmate"]
+	path = lib/solmate
+	url = https://github.com/transmissions11/solmate
