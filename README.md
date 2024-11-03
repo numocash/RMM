@@ -40,10 +40,5 @@ Numo deploys a `market` instance for each pair. Each `market` can handle any two
 
 | Network  | Numo Smart Contracts 0.1.0                                                                                                          |                                                                                                |
 | -------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Celo | [0x82360b9a2076a09ea8abe2b3e11aed89de3a02d1](https://etherscan.io/address/0x82360b9a2076a09ea8abe2b3e11aed89de3a02d1 )        |
-| Ethereum Sepolia  | [0x82360b9a2076a09ea8abe2b3e11aed89de3a02d1](https://sepolia.etherscan.io/address/0x82360b9a2076a09ea8abe2b3e11aed89de3a02d1) | 
-
-
-
-
-
+| Celo | [0x82360b9a2076a09ea8abe2b3e11aed89de3a02d1](https://explorer.celo.org/mainnet/token/0x82360b9a2076a09ea8abe2b3e11aed89de3a02d1 )        |
+| 
