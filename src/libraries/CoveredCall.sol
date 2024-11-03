@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import {GaussianMath} from "./GaussianMath.sol";
-import {FixedPointMathLib} from "lib/solmate/src/utils/FixedPointMathLib.sol";
-import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
-import {ToUintOverflow, ToIntOverflow} from "src/libraries/Errors.sol";
+import {Gaussian} from "lib/solstat/src/Gaussian.sol";
+import {FixedPointMathLib} from "lib/solstat/lib/solmate/src/utils/FixedPointMathLib.sol";
+import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ToUintOverflow, ToIntOverflow} from "./Errors.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
@@ -44,8 +44,8 @@ function computeTradingFunction(
 
     uint256 b_i = reserveY_ * 1e36 / (strike_ * liquidity);
 
-    int256 a = GaussianMath.ppf(toInt(a_i));
-    int256 b = GaussianMath.ppf(toInt(b_i));
+    int256 a = Gaussian.ppf(toInt(a_i));
+    int256 b = Gaussian.ppf(toInt(b_i));
     int256 c = tau_ != 0 ? toInt(computeSigmaSqrtTau(sigma_, tau_)) : int256(0);
     return a + b + c;
 }
@@ -60,7 +60,7 @@ function computeSpotPrice(uint256 reserveX_, uint256 totalLiquidity_, uint256 st
     returns (uint256)
 {
     // Φ^-1(1 - x/L)
-    int256 a = GaussianMath.ppf(int256(1 ether - reserveX_.divWadDown(totalLiquidity_)));
+    int256 a = Gaussian.ppf(int256(1 ether - reserveX_.divWadDown(totalLiquidity_)));
     // σ√τ
     int256 b = toInt(computeSigmaSqrtTau(sigma_, tau_));
     // 1/2σ^2τ
@@ -76,11 +76,11 @@ function computeY(uint256 reserveX_, uint256 liquidity, uint256 strike_, uint256
     pure
     returns (uint256)
 {
-    int256 a = GaussianMath.ppf(toInt(1 ether - reserveX_.divWadDown(liquidity)));
+    int256 a = Gaussian.ppf(toInt(1 ether - reserveX_.divWadDown(liquidity)));
     int256 b = tau_ != 0 ? toInt(computeSigmaSqrtTau(sigma_, tau_)) : int256(0);
-    uint256 c = GaussianMath.cdf(a - b, 0, 1e18);
+    int256 c = Gaussian.cdf(a - b);
 
-    return liquidity * strike_ * c / (1e18 ** 2);
+    return liquidity * strike_ * toUint(c) / (1e18 ** 2);
 }
 
 /// @dev ~x = L(1 - Φ(Φ⁻¹(y/(LK)) + σ√τ))
@@ -88,11 +88,11 @@ function computeX(uint256 reserveY_, uint256 liquidity, uint256 strike_, uint256
     pure
     returns (uint256)
 {
-    int256 a = GaussianMath.ppf(toInt(reserveY_ * 1e36 / (liquidity * strike_)));
+    int256 a = Gaussian.ppf(toInt(reserveY_ * 1e36 / (liquidity * strike_)));
     int256 b = tau_ != 0 ? toInt(computeSigmaSqrtTau(sigma_, tau_)) : int256(0);
-    uint256 c = GaussianMath.cdf(a + b, 0, 1e18);
+    int256 c = Gaussian.cdf(a + b);
 
-    return liquidity * (1 ether - toUint(int256(c))) / 1e18;
+    return liquidity * (1 ether - toUint(c)) / 1e18;
 }
 
 /// @dev ~L = x / (1 - Φ(Φ⁻¹(y/(LK)) + σ√τ))
@@ -100,8 +100,8 @@ function computeL(uint256 reserveX_, uint256 liquidity, uint256 sigma_, uint256 
     pure
     returns (uint256)
 {
-    int256 a = GaussianMath.ppf(toInt(reserveX_ * 1 ether / liquidity));
-    int256 c = GaussianMath.cdf(
+    int256 a = Gaussian.ppf(toInt(reserveX_ * 1 ether / liquidity));
+    int256 c = Gaussian.cdf(
         (
             (a * toInt(computeSigmaSqrtTau(sigma_, prevTau)) / 1 ether)
                 + toInt(sigma_ * sigma_ * prevTau / (2 ether * 1 ether))
@@ -120,9 +120,9 @@ function computeLGivenYK(
     uint256 sigma_,
     uint256 newTau
 ) pure returns (uint256) {
-    int256 a = GaussianMath.ppf(toInt(reserveY_ * 1e36 / (liquidity * strike_)));
+    int256 a = Gaussian.ppf(toInt(reserveY_ * 1e36 / (liquidity * strike_)));
     int256 b = newTau != 0 ? toInt(computeSigmaSqrtTau(sigma_, newTau)) : int256(0);
-    uint256 c = GaussianMath.cdf(a + b, 0, 1e18);
+    int256 c = Gaussian.cdf(a + b);
 
     return reserveX_ * 1 ether / toUint(1 ether - c);
 }
@@ -135,7 +135,7 @@ function computeLGivenX(uint256 reserveX_, uint256 S, uint256 strike_, uint256 s
     uint256 sigmaSqrtTau = computeSigmaSqrtTau(sigma_, tau_);
     uint256 halfSigmaSquaredTau = sigma_.mulWadDown(sigma_).mulWadDown(0.5 ether).mulWadDown(tau_);
     int256 d1 = 1 ether * (lnSDivK + int256(halfSigmaSquaredTau)) / int256(sigmaSqrtTau);
-    uint256 cdf = uint256(GaussianMath.cdf(d1, 0, 1e18));
+    uint256 cdf = uint256(Gaussian.cdf(d1));
 
     return reserveX_.divWadUp(1 ether - cdf);
 }
@@ -326,11 +326,11 @@ function computeTfDL(bytes memory args, uint256 L) pure returns (int256) {
     int256 mu = int256(K);
     int256 L_squared = int256(L.mulWadDown(L));
 
-    int256 a = GaussianMath.ppf(int256(rX.divWadUp(L)));
-    int256 b = GaussianMath.ppf(int256(rY.divWadUp(L.mulWadUp(K))));
+    int256 a = Gaussian.ppf(int256(rX.divWadUp(L)));
+    int256 b = Gaussian.ppf(int256(rY.divWadUp(L.mulWadUp(K))));
 
-    int256 pdf_a = GaussianMath.pdf(a);
-    int256 pdf_b = GaussianMath.pdf(b);
+    int256 pdf_a = Gaussian.pdf(a);
+    int256 pdf_b = Gaussian.pdf(b);
 
     int256 term1 = x * 1 ether / (int256(L_squared) * (pdf_a) / 1 ether);
 
@@ -343,8 +343,8 @@ function computeTfDL(bytes memory args, uint256 L) pure returns (int256) {
 
 function computeTfDReserveX(bytes memory args, uint256 rX) pure returns (int256) {
     (, uint256 L,,,) = abi.decode(args, (uint256, uint256, uint256, uint256, uint256));
-    int256 a = GaussianMath.ppf(toInt(rX * 1e18 / L));
-    int256 pdf_a = GaussianMath.pdf(a);
+    int256 a = Gaussian.ppf(toInt(rX * 1e18 / L));
+    int256 pdf_a = Gaussian.pdf(a);
     int256 result = 1e36 / (int256(L) * pdf_a / 1e18);
     return result;
 }
@@ -352,8 +352,8 @@ function computeTfDReserveX(bytes memory args, uint256 rX) pure returns (int256)
 function computeTfDReserveY(bytes memory args, uint256 rY) pure returns (int256) {
     (, uint256 L, uint256 K,,) = abi.decode(args, (uint256, uint256, uint256, uint256, uint256));
     int256 KL = int256(K * L / 1e18);
-    int256 a = GaussianMath.ppf(int256(rY) * 1e18 / KL);
-    int256 pdf_a = GaussianMath.pdf(a);
+    int256 a = Gaussian.ppf(int256(rY) * 1e18 / KL);
+    int256 pdf_a = Gaussian.pdf(a);
     int256 result = 1e36 / (KL * pdf_a / 1e18);
     return result;
 }
@@ -393,8 +393,8 @@ function calcSlope(
         return -1;
     }
     
-    int256 b = GaussianMath.ppf(toInt(b_i));
-    int256 pdf_b = GaussianMath.pdf(b);
+    int256 b = Gaussian.ppf(toInt(b_i));
+    int256 pdf_b = Gaussian.pdf(b);
     
     int256 slope = (int256(strike_ * totalLiquidity_) * pdf_b / 1e36);
     
