@@ -31,11 +31,15 @@ Numo deploys a `market` instance for each pair. Each `market` can handle any two
 
 ## Setup
 
-`forge install`
+```bash
+forge install
+```
 
 ## Testing
 
-`forge test -vvv`
+```bash
+forge test -vvv
+```
 
 ### Coverage
 
