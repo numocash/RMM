@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Gaussian} from "lib/solidity-cdf/src/Gaussian.sol";
-import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
+import {FixedPointMathLib} from "lib/solmate/src/utils/FixedPointMathLib.sol";
 
 /// @title GaussianMath Library
 /// @notice Mathematical functions for Gaussian (Normal) distribution calculations
@@ -70,7 +70,7 @@ library GaussianMath {
     function pdf(int256 x) public pure returns (int256) {
         int256 xSquared = (x * x) / ONE;
         int256 exponent = (-xSquared / 2);
-        return (ONE * exponent.expWad()) / SQRT_2PI;
+        return int256(ONE * exponent.expWad()) / SQRT_2PI;
     }
 
     /// @notice Computes the Standard Normal CDF
