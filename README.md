@@ -21,7 +21,7 @@ Numo enables 24/7 option markets for leverage, income, and hedging. The smart co
 
 A [european-style call options](https://en.wikipedia.org/wiki/European_option) can offer any amount of leverage. For example, a trader with $10 seeking 100x leverage on ETH can purchase a far out-of-the-money (OTM) option. Suppose ETH is currently trading at $2000, and the trader buys a call option with a strike price of $3000 and a 30-day expiry for a premium of $10. ETH however is trading at $4000 at expiration, the call option is worth 100x as the profit = (4000 - 3000) - 10 = $990.
 
-**Importantly**, you never lose more than the premium paid (e.g. $10) and you can never get liquidated. 
+> **Importantly**, you never lose more than the premium paid (e.g. $10) and you can never get liquidated. 
 
 ### Income
 
@@ -53,6 +53,6 @@ cmd + shift + p -> Coverage Gutters: Display Coverage
 
 ## Deployments
 
-| Network  | Factory Address                                                                                                           |                                                                                                |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Celo | [0x82360b9a2076a09ea8abe2b3e11aed89de3a02d1](https://explorer.celo.org/mainnet/token/0x82360b9a2076a09ea8abe2b3e11aed89de3a02d1 )        |
+| Network  | Factory Address                                       |  
+| -------- | ----------------------------------------------------- | 
+| Celo     | [0x82360b9a2076a09ea8abe2b3e11aed89de3a02d1](https://explorer.celo.org/mainnet/token/0x82360b9a2076a09ea8abe2b3e11aed89de3a02d1 ) |
