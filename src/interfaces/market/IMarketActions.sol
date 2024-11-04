@@ -16,7 +16,7 @@ interface IMarketActions {
     /// @param  sigma       AKA Implied Volatility in basis points, determines the price impact of swaps, valid for (1, 10_000_000)
     /// @param  maturity    Timestamp which starts the BUFFER countdown until swaps will cease, in seconds, valid for (block.timestamp, 2^32-1]
     /// @param  gamma       Multiplied against swap in amounts to apply fee, equal to 1 - fee % but units are in basis points, valid for (9_000, 10_000)
-    /// @param  quotePerLp  quote reserve per liq. with quote decimals, = 1 - N(d1), d1 = (ln(S/K)+(r*σ^2/2))/σ√τ, valid for [0, 1e^(quote token decimals))
+    /// @param  quotePerBase  quote reserve per liq. with quote decimals, = 1 - N(d1), d1 = (ln(S/K)+(r*σ^2/2))/σ√τ, valid for [0, 1e^(quote token decimals))
     /// @param  delLiquidity Amount of liquidity units to allocate to the curve, wei value with 18 decimals of precision
     /// @param  data        Arbitrary data that is passed to the createCallback function
     /// @return poolId      Keccak256 hash of engine address, strike, sigma, maturity, and gamma
@@ -27,7 +27,7 @@ interface IMarketActions {
         uint32 sigma,
         uint32 maturity,
         uint32 gamma,
-        uint256 quotePerLp,
+        uint256 quotePerBase,
         uint256 delLiquidity,
         bytes calldata data
     )
