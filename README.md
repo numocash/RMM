@@ -15,6 +15,8 @@ Numo enables 24/7 option markets for leverage, income, and hedging. The smart co
 
 > ⚠️ **WARNING:** This code has not yet been audited. Use at your own risk.
 
+Numo deploys a `market` instance for each pair. Each `market` can handle any two arbitrary ERC-20 token and follows the standard naming conventions seen in traditional FX markets (`base`/`quote`).
+
 ## Use Cases
 
 ### Leverage
@@ -26,8 +28,6 @@ A [european-style call options](https://en.wikipedia.org/wiki/European_option) c
 ### Income
 
 Liquidity providers on Numo earn sustainable income from selling covered call options. As in traditional options markets, **sellers** earn a premium upfront. These premiums are paid by buyers who enjoy the *right but not obligation* to exercise the call option if it is in the money. To optimize the premiums earned, a batch auction can be implemented to match buyers and sellers. 
-
-Numo deploys a `market` instance for each pair. Each `market` can handle any two arbitrary ERC-20 token and follows the standard naming conventions seen in traditional FX markets (`base`/`quote`).
 
 ## Setup
 
