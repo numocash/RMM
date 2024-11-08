@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity 0.8.20;
 
-import "./libraries/Margin.sol";
 import "./libraries/ReplicationMath.sol";
 import "./libraries/Reserve.sol";
 import "./libraries/SafeCast.sol";
 import "./libraries/Transfers.sol";
 import "./libraries/Units.sol";
+import "./libraries/CoveredCall.sol";
 
 import "./interfaces/callback/ICreateCallback.sol";
 import "./interfaces/callback/IDepositCallback.sol";
@@ -24,7 +24,7 @@ import "./interfaces/IFactory.sol";
 // |_| \_| \___/ |_|  |_| \____/  
 
 /// @title   Market
-/// @author  Originally authored by Primitive Finance 
+/// @author  Robert Leifke 
 /// @notice  Modified from PrimitiveEngine.sol
 /// @dev     RMM-01
 contract Market is IMarket {
@@ -33,8 +33,6 @@ contract Market is IMarket {
     using SafeCast for uint256;
     using Reserve for mapping(bytes32 => Reserve.Data);
     using Reserve for Reserve.Data;
-    using Margin for mapping(address => Margin.Data);
-    using Margin for Margin.Data;
     using Transfers for IERC20;
 
     /// @dev            Parameters of each pool
@@ -71,8 +69,6 @@ contract Market is IMarket {
     uint256 private locked = 1;
     /// @inheritdoc IMarketView
     mapping(bytes32 => Calibration) public override calibrations;
-    /// @inheritdoc IMarketView
-    mapping(address => Margin.Data) public override margins;
     /// @inheritdoc IMarketView
     mapping(bytes32 => Reserve.Data) public override reserves;
     /// @inheritdoc IMarketView
@@ -203,7 +199,6 @@ contract Market is IMarket {
         emit Create(msg.sender, cal.strike, cal.sigma, cal.maturity, cal.gamma, delQuote, delBase, amount);
     }
 
-    // ===== Margin =====
 
     /// @inheritdoc IMarketActions
     function deposit(
@@ -213,7 +208,7 @@ contract Market is IMarket {
         bytes calldata data
     ) external override lock {
         if (delQuote == 0 && delBase == 0) revert ZeroDeltasError();
-        margins[recipient].deposit(delQuote, delBase); // state update
+        deposit(recipient, delQuote, delBase); // state update
 
         uint256 balQuote;
         uint256 balBase;
@@ -232,7 +227,7 @@ contract Market is IMarket {
         uint256 delBase
     ) external override lock {
         if (delQuote == 0 && delBase == 0) revert ZeroDeltasError();
-        margins.withdraw(delQuote, delBase); // state update
+        withdraw(recipient, delQuote, delBase); // state update
         if (delQuote != 0) IERC20(quote).safeTransfer(recipient, delQuote);
         if (delBase != 0) IERC20(base).safeTransfer(recipient, delBase);
         emit Withdraw(msg.sender, recipient, delQuote, delBase);
@@ -246,7 +241,6 @@ contract Market is IMarket {
         address recipient,
         uint256 delQuote,
         uint256 delBase,
-        bool fromMargin,
         bytes calldata data
     ) external override lock returns (uint256 delLiquidity) {
         if (delQuote == 0 || delBase == 0) revert ZeroDeltasError();
@@ -261,15 +255,6 @@ contract Market is IMarket {
 
         liquidity[recipient][poolId] += delLiquidity; // increase position liquidity
         reserve.allocate(delQuote, delBase, delLiquidity, timestamp); // increase reserves and liquidity
-
-        if (fromMargin) {
-            margins.withdraw(delQuote, delBase); // removes tokens from `msg.sender` margin account
-        } else {
-            (uint256 balQuote, uint256 balBase) = (balanceQuote(), balanceBase());
-            ILiquidityCallback(msg.sender).allocateCallback(delQuote, delBase, data); // agnostic payment
-            checkQuoteBalance(balQuote + delQuote);
-            checkBaseBalance(balBase + delBase);
-        }
 
         emit Allocate(msg.sender, recipient, poolId, delQuote, delBase, delLiquidity);
     }
@@ -288,7 +273,7 @@ contract Market is IMarket {
 
         liquidity[msg.sender][poolId] -= delLiquidity; // state update
         reserve.remove(delQuote, delBase, delLiquidity, _blockTimestamp());
-        margins[msg.sender].deposit(delQuote, delBase);
+        deposit(msg.sender, delQuote, delBase);
 
         emit Remove(msg.sender, poolId, delQuote, delBase, delLiquidity);
     }
@@ -296,8 +281,6 @@ contract Market is IMarket {
     struct SwapDetails {
         address recipient;
         bool quoteForBase;
-        bool fromMargin;
-        bool toMargin;
         uint32 timestamp;
         bytes32 poolId;
         uint256 deltaIn;
@@ -311,8 +294,6 @@ contract Market is IMarket {
         bool quoteForBase,
         uint256 deltaIn,
         uint256 deltaOut,
-        bool fromMargin,
-        bool toMargin,
         bytes calldata data
     ) external override lock {
         if (deltaIn == 0) revert DeltaInError();
@@ -324,8 +305,6 @@ contract Market is IMarket {
             deltaIn: deltaIn,
             deltaOut: deltaOut,
             quoteForBase: quoteForBase,
-            fromMargin: fromMargin,
-            toMargin: toMargin,
             timestamp: _blockTimestamp()
         });
 
@@ -368,13 +347,13 @@ contract Market is IMarket {
 
         if (details.quoteForBase) {
             if (details.toMargin) {
-                margins[details.recipient].deposit(0, details.deltaOut);
+                deposit(details.recipient, 0, details.deltaOut);
             } else {
                 IERC20(base).safeTransfer(details.recipient, details.deltaOut); // optimistic transfer out
             }
 
             if (details.fromMargin) {
-                margins.withdraw(details.deltaIn, 0); // pay for swap
+                withdraw(msg.sender, details.deltaIn, 0); // pay for swap
             } else {
                 uint256 balQuote = balanceQuote();
                 ISwapCallback(msg.sender).swapCallback(details.deltaIn, 0, data); // agnostic transfer in
@@ -382,17 +361,9 @@ contract Market is IMarket {
             }
         } else {
             if (details.toMargin) {
-                margins[details.recipient].deposit(details.deltaOut, 0);
+                deposit(details.recipient, details.deltaOut, 0);
             } else {
                 IERC20(quote).safeTransfer(details.recipient, details.deltaOut); // optimistic transfer out
-            }
-
-            if (details.fromMargin) {
-                margins.withdraw(0, details.deltaIn); // pay for swap
-            } else {
-                uint256 balBase = balanceBase();
-                ISwapCallback(msg.sender).swapCallback(0, details.deltaIn, data); // agnostic transfer in
-                checkBaseBalance(balBase + details.deltaIn);
             }
         }
 
