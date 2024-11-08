@@ -33,16 +33,16 @@ function computeTauWadYears(uint256 tauSeconds) pure returns (uint256) {
 
 /// @dev k = Φ⁻¹(x/L) + Φ⁻¹(y/μL)  + σ√τ
 function computeTradingFunction(
-    uint256 reserveX_,
-    uint256 reserveY_,
+    uint256 reserveBase_,
+    uint256 reserveQuote_,
     uint256 liquidity,
     uint256 strike_,
     uint256 sigma_,
     uint256 tau_
 ) pure returns (int256) {
-    uint256 a_i = reserveX_ * 1e18 / liquidity;
+    uint256 a_i = reserveBase_ * 1e18 / liquidity;
 
-    uint256 b_i = reserveY_ * 1e36 / (strike_ * liquidity);
+    uint256 b_i = reserveQuote_ * 1e36 / (strike_ * liquidity);
 
     int256 a = Gaussian.ppf(toInt(a_i));
     int256 b = Gaussian.ppf(toInt(b_i));
