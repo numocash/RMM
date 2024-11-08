@@ -274,7 +274,7 @@ function findRootNewX(bytes memory args, uint256 initialGuess, uint256 maxIterat
     reserveBase_ = initialGuess;
     int256 reserveBase_next;
     for (uint256 i = 0; i < maxIterations; i++) {
-        int256 dfx = computeTfDReserveX(args, reserveBase_);
+        int256 dfx = computeTfDReserveBase(args, reserveBase_);
         int256 fx = findX(args, reserveBase_);
 
         if (dfx == 0) {
@@ -301,7 +301,7 @@ function findRootNewY(bytes memory args, uint256 initialGuess, uint256 maxIterat
     int256 reserveQuote_next;
     for (uint256 i = 0; i < maxIterations; i++) {
         int256 fx = findY(args, reserveQuote_);
-        int256 dfx = computeTfDReserveY(args, reserveQuote_);
+        int256 dfx = computeTfDReserveQuote(args, reserveQuote_);
 
         if (dfx == 0) {
             // Handle division by zero
@@ -343,7 +343,7 @@ function computeTfDL(bytes memory args, uint256 L) pure returns (int256) {
 
 function computeTfDReserveBase(bytes memory args, uint256 rBase) pure returns (int256) {
     (, uint256 L,,,) = abi.decode(args, (uint256, uint256, uint256, uint256, uint256));
-    int256 a = Gaussian.ppf(toInt(rX * 1e18 / L));
+    int256 a = Gaussian.ppf(toInt(rBase * 1e18 / L));
     int256 pdf_a = Gaussian.pdf(a);
     int256 result = 1e36 / (int256(L) * pdf_a / 1e18);
     return result;
@@ -352,7 +352,7 @@ function computeTfDReserveBase(bytes memory args, uint256 rBase) pure returns (i
 function computeTfDReserveQuote(bytes memory args, uint256 rQuote) pure returns (int256) {
     (, uint256 L, uint256 K,,) = abi.decode(args, (uint256, uint256, uint256, uint256, uint256));
     int256 KL = int256(K * L / 1e18);
-    int256 a = Gaussian.ppf(int256(rY) * 1e18 / KL);
+    int256 a = Gaussian.ppf(int256(rQuote) * 1e18 / KL);
     int256 pdf_a = Gaussian.pdf(a);
     int256 result = 1e36 / (KL * pdf_a / 1e18);
     return result;
