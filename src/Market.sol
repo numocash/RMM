@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity 0.8.20;
 
-import "./libraries/ReplicationMath.sol";
 import "./libraries/Reserve.sol";
 import "./libraries/SafeCast.sol";
 import "./libraries/Transfers.sol";
@@ -28,7 +27,6 @@ import "./interfaces/IFactory.sol";
 /// @notice  Modified from PrimitiveEngine.sol
 /// @dev     RMM-01
 contract Market is IMarket {
-    using ReplicationMath for int128;
     using Units for uint256;
     using SafeCast for uint256;
     using Reserve for mapping(bytes32 => Reserve.Data);
@@ -40,13 +38,13 @@ contract Market is IMarket {
     /// @param sigma    Implied volatility, with 1e4 decimals such that 10000 = 100%
     /// @param maturity Timestamp of pool expiration, in seconds
     /// @param lastTimestamp Timestamp of the pool's last update, in seconds
-    /// @param gamma    Multiplied against deltaIn amounts to apply swap fee, gamma = 1 - fee %, scaled up by 1e4
+    /// @param adminFee Multiplied against deltaIn amounts to apply swap fee, adminFee = 1 - fee %, scaled up by 1e4
     struct Calibration {
         uint128 strike;
         uint32 sigma;
         uint32 maturity;
         uint32 lastTimestamp;
-        uint32 gamma;
+        uint32 adminFee;
     }
 
     /// @inheritdoc IMarketView
@@ -148,7 +146,7 @@ contract Market is IMarket {
         uint128 strike,
         uint32 sigma,
         uint32 maturity,
-        uint32 gamma,
+        uint32 adminFee,
         uint256 quotePerLp,
         uint256 delLiquidity,
         bytes calldata data
@@ -163,25 +161,25 @@ contract Market is IMarket {
         )
     {
         (uint256 factor0, uint256 factor1) = (scaleFactorQuote, scaleFactorBase);
-        poolId = keccak256(abi.encodePacked(address(this), strike, sigma, maturity, gamma));
+        poolId = keccak256(abi.encodePacked(address(this), strike, sigma, maturity, adminFee));
         if (calibrations[poolId].lastTimestamp != 0) revert PoolDuplicateError();
         if (sigma > 1e7 || sigma < 1) revert SigmaError(sigma);
         if (strike == 0) revert StrikeError(strike);
         if (delLiquidity <= MIN_LIQUIDITY) revert MinLiquidityError(delLiquidity);
         if (quotePerLp > PRECISION / factor0 || quotePerLp == 0) revert quotePerLpError(quotePerLp);
-        if (gamma > Units.PERCENTAGE || gamma < 9000) revert GammaError(gamma);
+        if (adminFee > Units.PERCENTAGE || adminFee < 9000) revert AdminFeeError(adminFee);
 
         Calibration memory cal = Calibration({
             strike: strike,
             sigma: sigma,
             maturity: maturity,
             lastTimestamp: _blockTimestamp(),
-            gamma: gamma
+            adminFee: adminFee
         });
 
         if (cal.lastTimestamp > cal.maturity) revert PoolExpiredError();
         uint32 tau = cal.maturity - cal.lastTimestamp; // time until expiry
-        delBase = ReplicationMath.getBaseGivenQuote(0, factor0, factor1, quotePerLp, cal.strike, cal.sigma, tau);
+        delBase = CoveredCall.getBaseGivenQuote(0, factor0, factor1, quotePerLp, cal.strike, cal.sigma, tau);
         delQuote = (quotePerLp * delLiquidity) / PRECISION; // QuoteDecimals * 1e18 decimals / 1e18 = QuoteDecimals
         delBase = (delBase * delLiquidity) / PRECISION;
         if (delQuote == 0 || delBase == 0) revert CalibrationError(delQuote, delBase);
@@ -196,7 +194,7 @@ contract Market is IMarket {
         checkQuoteBalance(balQuote + delQuote);
         checkBaseBalance(balBase + delBase);
 
-        emit Create(msg.sender, cal.strike, cal.sigma, cal.maturity, cal.gamma, delQuote, delBase, amount);
+        emit Create(msg.sender, cal.strike, cal.sigma, cal.maturity, cal.adminFee, delQuote, delBase, amount);
     }
 
 
@@ -317,7 +315,7 @@ contract Market is IMarket {
             Calibration memory cal = calibrations[details.poolId];
             Reserve.Data storage reserve = reserves[details.poolId];
             uint32 tau = cal.maturity - cal.lastTimestamp;
-            uint256 deltaInWithFee = (details.deltaIn * cal.gamma) / Units.PERCENTAGE; // amount * (1 - fee %)
+            uint256 deltaInWithFee = (details.deltaIn * cal.adminFee) / Units.PERCENTAGE; // amount * (1 - fee %)
 
             uint256 adjustedQuote;
             uint256 adjustedBase;
@@ -331,7 +329,7 @@ contract Market is IMarket {
             adjustedQuote = (adjustedQuote * PRECISION) / reserve.liquidity;
             adjustedBase = (adjustedBase * PRECISION) / reserve.liquidity;
 
-            int128 invariantAfter = ReplicationMath.calcInvariant(
+            int128 invariantAfter = CoveredCall.calcInvariant(
                 scaleFactorQuote,
                 scaleFactorBase,
                 adjustedQuote,
