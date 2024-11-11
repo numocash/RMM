@@ -11,7 +11,7 @@
 
 ### A marketplace for options on ERC-20s.
 
-Numo enables 24/7 option markets for leverage, income, and hedging. The smart contract suite is a modified fork of @primitivefinance's open source [RMM-01](https://github.com/primitivefinance/rmm) implementation and the [replicating market makers](https://arxiv.org/abs/2103.14769) paper that first proved any option strategy can be constructed using CFMMs.
+Numo enables 24/7 option markets for leverage, income, and hedging. The smart contract suite is a inspired by @primitivefinance's open source [RMM-01](https://github.com/primitivefinance/rmm) implementation and the [replicating market makers](https://arxiv.org/abs/2103.14769) paper that first proved any option strategy can be constructed using CFMMs.
 
 > ⚠️ **WARNING:** This code has not yet been audited. Use at your own risk.
 
