@@ -12,7 +12,7 @@
 
 > ⚠️ **WARNING:** This code has not yet been audited. Use at your own risk.
 
-NUMO is a cryptocurrency with an exhange rate that [floats](https://en.wikipedia.org/wiki/Floating_exchange_rate) and uses options to stay stable from income generated selling volatility. The smart contract suite is a modified fork of @primitivefinance's open source [RMM-01](https://github.com/primitivefinance/rmm) implementation and inspired by the [replicating market makers](https://arxiv.org/abs/2103.14769) paper that showed any option strategy can be constructed using AMMs.
+NUMO is a cryptocurrency with an exhange rate that [floats](https://en.wikipedia.org/wiki/Floating_exchange_rate) and maintains stability from income generated selling options. The smart contract suite is inspired by @primitivefinance's open source [RMM-01](https://github.com/primitivefinance/rmm) implementation and the [replicating market makers](https://arxiv.org/abs/2103.14769) paper that showed any option strategy can be constructed using AMMs.
 
 ## How it works
 
