@@ -18,7 +18,7 @@ NUMO is a cryptocurrency with an exhange rate that [floats](https://en.wikipedia
 
 At the core, each NUMO is backed by a portfolio of assets managed by an algorithm. The algorithm dynamically adjusts the composition of the portfolio to an acceptable level of volatility while generating income from premiums earned via on-chain spot markets. (e.g. traders exercising out of the money options when they swap on Uniswap). 
 
-A NUMO is issued by deploying a `numo` instance. Each `numo` will initially handle only two arbitrary ERC-20 tokens and follow the standard naming conventions seen in traditional FX markets (`base`/`quote`). In the future, each `numo` will be able to handle a weighted basket of assets similar to other geometric mean market makers (e.g. balancer).
+On the contract level, a NUMO is issued calling `createNumo()`. Each `numo` is an ERC-20 token that will handle the reserves of two arbitrary ERC-20 tokens,`base` and `quote`. In the future, each `numo` will be able to suport more tokens in a weighted basket similar to other geometric mean market makers (e.g. balancer).
 
 ## Setup
 
