@@ -4,23 +4,23 @@ pragma solidity ^0.8.13;
 import {Market} from "./Market.sol";
 
 contract Factory {
-    event NewPool(address indexed caller, address indexed pool, string name, string symbol);
+    event NewPortfolio(address indexed caller, address indexed portfolio, string name, string symbol);
 
     address public immutable WETH;
 
-    address[] public pools;
+    address[] public portfolios;
 
     constructor(address weth_) {
         WETH = weth_;
     }
 
-    function createMarket(string memory poolName, string memory poolSymbol, uint256 sigma, uint256 fee)
+    function createNumo(string memory portfolioName, string memory portfolioSymbol, uint256 sigma, uint256 fee)
         external
-        returns (Market)
+        returns (Numo)
     {
-        Market option = new Market(poolName, poolSymbol, sigma, fee);
-        emit NewPool(msg.sender, address(option), poolName, poolSymbol);
-        pools.push(address(option));
-        return option;
+        Numo numo = new Market(portfolioName, portfolioSymbol, sigma, fee);
+        emit NewPortfolio(msg.sender, address(numo), portfolioName, portfolioSymbol);
+        portfolios.push(address(numo));
+        return numo;
     }
 }

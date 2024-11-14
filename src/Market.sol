@@ -179,9 +179,19 @@ contract Market is IMarket {
 
         if (cal.lastTimestamp > cal.maturity) revert PoolExpiredError();
         uint32 tau = cal.maturity - cal.lastTimestamp; // time until expiry
-        delBase = CoveredCall.getBaseGivenQuote(0, factor0, factor1, quotePerLp, cal.strike, cal.sigma, tau);
-        delQuote = (quotePerLp * delLiquidity) / PRECISION; // QuoteDecimals * 1e18 decimals / 1e18 = QuoteDecimals
-        delBase = (delBase * delLiquidity) / PRECISION;
+        Reserve.Data storage reserve = reserves[poolId];
+        delBase = CoveredCall.computeDeltaLYIn(
+            0, 
+            reserveBase, 
+            reserveQuote, 
+            totalliquidity, 
+            swapFee, 
+            strike, 
+            sigma, 
+            tau
+        );
+        delQuote = (reserveQuote * totalLiquidity) / PRECISION;
+        delBase = (reserveBase * totalLiquidity) / PRECISION;
         if (delQuote == 0 || delBase == 0) revert CalibrationError(delQuote, delBase);
 
         calibrations[poolId] = cal; // state update
