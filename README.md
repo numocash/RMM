@@ -16,7 +16,7 @@ NUMO is a cryptocurrency with an exhange rate that [floats](https://en.wikipedia
 
 ## Motivation
 
-Money was invented to serve three main functions: store value, facilitate exchange, and serve as a unit of account. Outside of a few majors, the majority of currencies have failed to deliver due to inadequate governance. NUMO serves as a solution by achieving all three promises without being subject to the poor management of any single governmentm, central bank, or political headwind. Thus fufilling a fourth promise, the seperation between money and state.
+Money was invented to serve three main functions: store value, facilitate exchange, and serve as a unit of account. Outside of a few majors, the majority of currencies have failed to deliver due to inadequate governance. NUMO serves as a solution by achieving all three promises without being subject to the poor management of any single government, central bank, or political headwind. Thus fufilling a fourth promise, the seperation between money and state.
 
 ## How it works
 
