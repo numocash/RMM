@@ -146,9 +146,10 @@ contract Market is IMarket {
         uint128 strike,
         uint32 sigma,
         uint32 maturity,
-        uint32 adminFee,
-        uint256 quotePerLp,
-        uint256 delLiquidity,
+        uint32 swapFee,
+        uint256 totalLiquidity,
+        uint256 reserveBase,
+        uint256 reserveQuote,
         bytes calldata data
     )
         external
@@ -167,7 +168,7 @@ contract Market is IMarket {
         if (strike == 0) revert StrikeError(strike);
         if (delLiquidity <= MIN_LIQUIDITY) revert MinLiquidityError(delLiquidity);
         if (quotePerLp > PRECISION / factor0 || quotePerLp == 0) revert quotePerLpError(quotePerLp);
-        if (adminFee > Units.PERCENTAGE || adminFee < 9000) revert AdminFeeError(adminFee);
+        if (adminFee > Units.PERCENTAGE || adminFee < 9000) revert SwapFeeError(swapFee);
 
         Calibration memory cal = Calibration({
             strike: strike,
