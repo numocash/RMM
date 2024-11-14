@@ -33,20 +33,6 @@ contract Market is IMarket {
     using Reserve for Reserve.Data;
     using Transfers for IERC20;
 
-    /// @dev            Parameters of each pool
-    /// @param strike   Strike price of pool with Base token decimals
-    /// @param sigma    Implied volatility, with 1e4 decimals such that 10000 = 100%
-    /// @param maturity Timestamp of pool expiration, in seconds
-    /// @param lastTimestamp Timestamp of the pool's last update, in seconds
-    /// @param adminFee Multiplied against deltaIn amounts to apply swap fee, adminFee = 1 - fee %, scaled up by 1e4
-    struct Calibration {
-        uint128 strike;
-        uint32 sigma;
-        uint32 maturity;
-        uint32 lastTimestamp;
-        uint32 adminFee;
-    }
-
     /// @inheritdoc IMarketView
     uint256 public constant override PRECISION = 10**18;
     /// @inheritdoc IMarketView
@@ -84,6 +70,26 @@ contract Market is IMarket {
     constructor() {
         (factory, quote, base, scaleFactorQuote, scaleFactorBase, MIN_LIQUIDITY) = IFactory(msg.sender)
             .args();
+    }
+
+    function init(uint256 priceBase, uint256 amountBase, uint256 strike_)
+        external
+        lock
+        returns (uint256 totalLiquidity_, uint256 amountY)
+    {
+        if (strike_ <= 1e18 || strike != 0) revert InvalidStrike();
+
+        (totalLiquidity_, amountQuote) = prepareInit(priceBase, amountBase, strike_, sigma);
+
+        _mint(msg.sender, totalLiquidity_ - 1000);
+        _mint(address(0), 1000);
+        _adjust(toInt(amountBase), toInt(amountQuote), toInt(totalLiquidity_), strike_);
+        _debit(reserveBase);
+        _debit(reserveQuote);
+
+        emit Init(
+            msg.sender, amountBase, amountQuote, totalLiquidity_, strike_, sigma, fee, maturity
+        );
     }
 
     /// @return Quote token balance of this contract
