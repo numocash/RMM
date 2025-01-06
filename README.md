@@ -20,7 +20,7 @@ Money was invented to serve three main functions: store value, facilitate exchan
 
 ## How it works
 
-At the core, each NUMO is backed by a portfolio of assets managed by an algorithm. The algorithm dynamically adjusts the composition of the portfolio to an acceptable level of volatility while generating income from premiums earned via on-chain spot markets. (e.g. traders exercising out of the money options when they swap on Uniswap). 
+At the core, each NUMO is backed by a portfolio of assets managed by an algorithm, log-normal strategy. The algorithm dynamically adjusts the composition of the portfolio to an acceptable level of volatility while generating income from premiums earned via on-chain spot markets. (e.g. traders exercising out of the money options when they swap on Uniswap). 
 
 On the contract level, a NUMO is issued calling `createNumo()`. Each `numo` is an ERC-20 token that will hold the reserves of two arbitrary ERC-20 tokens,`base` and `quote`. In the future, each `numo` will be able to suport more tokens in a weighted basket similar to other geometric mean market makers (e.g. balancer).
 
